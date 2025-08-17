@@ -1,0 +1,6 @@
+{
+  "name": "Bezel's Jukebox",
+  "description": "Interactive music creation with AI-powered sample analysis and backing track generation.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
