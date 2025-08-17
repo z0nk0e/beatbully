@@ -1,4 +1,4 @@
-name: NodeJS with Vite CI
+name: NodeJS with Vite CI/CD
 
 on:
   push:
@@ -27,7 +27,35 @@ jobs:
       run: |
         echo "VITE_GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.local
 
+    - name: Install dependencies
+      run: npm install
+
     - name: Build with Vite
-      run: |
-        npm install
-        npm run build
+      run: npm run build
+
+    # Upload the build artifact to be used in the deploy job
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-files
+        path: dist
+
+  deploy:
+    # Requires the build job to succeed
+    needs: build
+    runs-on: ubuntu-latest
+    # Only run this job when pushing to the main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: dist-files
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # The build output folder, relative to the repository root
+        publish_dir: .
