@@ -1,11 +1,3 @@
-name: NodeJS with Vite CI/CD
-
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,7 +14,6 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
-    # This step creates the .env.local file with your secret
     - name: Create .env file
       run: |
         echo "VITE_GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.local
@@ -33,29 +24,16 @@ jobs:
     - name: Build with Vite
       run: npm run build
 
-    # Upload the build artifact to be used in the deploy job
+    # Upload the build artifact ONLY from the Node 20.x job
     - name: Upload artifact
+      # This condition ensures the artifact is uploaded only once
+      if: matrix.node-version == '20.x'
       uses: actions/upload-artifact@v4
       with:
         name: dist-files
-        path: dist
+        path: dist```
 
-  deploy:
-    # Requires the build job to succeed
-    needs: build
-    runs-on: ubuntu-latest
-    # Only run this job when pushing to the main branch
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Download artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: dist-files
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        # The build output folder, relative to the repository root
-        publish_dir: .
+With this change:
+*   All three jobs will still install dependencies and run the build to ensure your code works on all specified Node versions.
+*   However, **only the job running on Node.js 20.x** will upload the `dist` folder as an artifact.
+*   Your `deploy` job will then run, download that single artifact, and deploy it as intended, resolving the conflict error.
