@@ -1,4 +1,3 @@
-jobs:
   build:
     runs-on: ubuntu-latest
 
@@ -14,6 +13,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    # Assumes you have a secret named GEMINI_API_KEY in your repo settings
     - name: Create .env file
       run: |
         echo "VITE_GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.local
@@ -24,16 +24,12 @@ jobs:
     - name: Build with Vite
       run: npm run build
 
-    # Upload the build artifact ONLY from the Node 20.x job
+    # --- FIX IS HERE ---
+    # This entire step uploads the artifact.
+    # Note the indentation of 'if', 'uses', and 'with' are the same.
     - name: Upload artifact
-      # This condition ensures the artifact is uploaded only once
       if: matrix.node-version == '20.x'
       uses: actions/upload-artifact@v4
       with:
         name: dist-files
-        path: dist```
-
-With this change:
-*   All three jobs will still install dependencies and run the build to ensure your code works on all specified Node versions.
-*   However, **only the job running on Node.js 20.x** will upload the `dist` folder as an artifact.
-*   Your `deploy` job will then run, download that single artifact, and deploy it as intended, resolving the conflict error.
+        path: dist
