@@ -1,0 +1,33 @@
+name: NodeJS with Vite CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    # This step creates the .env.local file with your secret
+    - name: Create .env file
+      run: |
+        echo "VITE_GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.local
+
+    - name: Build with Vite
+      run: |
+        npm install
+        npm run build
